@@ -56,7 +56,7 @@
  */
 import {render, ShadyRenderOptions} from 'lit-html/lib/shady-render.js';
 
-import {PropertyValues, UpdatingElement} from './lib/updating-element.js';
+import {PropertyValues, UpdatingElementMixin} from './lib/updating-element.js';
 
 export * from './lib/updating-element.js';
 export * from './lib/decorators.js';
@@ -87,6 +87,9 @@ export interface CSSResultArray extends
  */
 const renderNotImplemented = {};
 
+
+export const LitElementMixin = function(superclass: typeof HTMLElement) {
+
 /**
  * Base element class that manages element properties and attributes, and
  * renders a lit-html template.
@@ -95,15 +98,16 @@ const renderNotImplemented = {};
  * `render` method to provide the component's template. Define properties
  * using the [[`properties`]] property or the [[`property`]] decorator.
  */
-export class LitElement extends UpdatingElement {
+return class extends UpdatingElementMixin(superclass) {
   /**
    * Ensure this class is marked as `finalized` as an optimization ensuring
    * it will not needlessly try to `finalize`.
    *
    * Note this property name is a string to prevent breaking Closure JS Compiler
    * optimizations. See updating-element.ts for more information.
+   * @protected
    */
-  protected static['finalized'] = true;
+  static['finalized'] = true;
 
   /**
    * Reference to the underlying library method used to render the element's
@@ -132,7 +136,8 @@ export class LitElement extends UpdatingElement {
    */
   static styles?: CSSResultOrNative|CSSResultArray;
 
-  private static _styles: Array<CSSResultOrNative|CSSResult>|undefined;
+  /** @private */
+  static _styles: Array<CSSResultOrNative|CSSResult>|undefined;
 
   /**
    * Return the array of styles to apply to the element.
@@ -145,7 +150,8 @@ export class LitElement extends UpdatingElement {
   }
 
   /** @nocollapse */
-  private static _getUniqueStyles() {
+  /** @private */
+  static _getUniqueStyles() {
     // Only gather styles once per class
     if (this.hasOwnProperty(JSCompiler_renameProperty('_styles', this))) {
       return;
@@ -201,7 +207,8 @@ export class LitElement extends UpdatingElement {
     });
   }
 
-  private _needsShimAdoptedStyleSheets?: boolean;
+  /** @private */
+  _needsShimAdoptedStyleSheets?: boolean;
 
   /**
    * Node or ShadowRoot into which element DOM should be rendered. Defaults
@@ -213,8 +220,9 @@ export class LitElement extends UpdatingElement {
    * Performs element initialization. By default this calls
    * [[`createRenderRoot`]] to create the element [[`renderRoot`]] node and
    * captures any pre-set values for registered properties.
+   * @protected
    */
-  protected initialize() {
+  initialize() {
     super.initialize();
     (this.constructor as typeof LitElement)._getUniqueStyles();
     (this as {
@@ -234,8 +242,9 @@ export class LitElement extends UpdatingElement {
    * element's DOM is rendered. For example, to render into the element's
    * childNodes, return `this`.
    * @returns {Element|DocumentFragment} Returns a node into which to render.
+   * @protected
    */
-  protected createRenderRoot(): Element|ShadowRoot {
+  createRenderRoot(): Element|ShadowRoot {
     return this.attachShadow({mode: 'open'});
   }
 
@@ -247,9 +256,10 @@ export class LitElement extends UpdatingElement {
    * is available but `adoptedStyleSheets` is not, styles are appended to the
    * end of the `shadowRoot` to [mimic spec
    * behavior](https://wicg.github.io/construct-stylesheets/#using-constructed-stylesheets).
+   * @protected
    */
-  protected adoptStyles() {
-    const styles = (this.constructor as typeof LitElement)._styles!;
+  adoptStyles() {
+    const styles = (this.constructor as typeof LitElement)._styles! as CSSResult[];
     if (styles.length === 0) {
       return;
     }
@@ -285,8 +295,9 @@ export class LitElement extends UpdatingElement {
    * and calls `render` to render DOM via lit-html. Setting properties inside
    * this method will *not* trigger another update.
    * @param _changedProperties Map of changed properties with old values
+   * @protected
    */
-  protected update(changedProperties: PropertyValues) {
+  update(changedProperties: PropertyValues) {
     // Setting properties in `render` should not trigger an update. Since
     // updates are allowed after super.update, it's important to call `render`
     // before that.
@@ -305,7 +316,7 @@ export class LitElement extends UpdatingElement {
     // priority.
     if (this._needsShimAdoptedStyleSheets) {
       this._needsShimAdoptedStyleSheets = false;
-      (this.constructor as typeof LitElement)._styles!.forEach((s) => {
+      ((this.constructor as typeof LitElement)._styles! as CSSResult[]).forEach((s) => {
         const style = document.createElement('style');
         style.textContent = s.cssText;
         this.renderRoot.appendChild(style);
@@ -318,8 +329,13 @@ export class LitElement extends UpdatingElement {
    * any value renderable by lit-html's `NodePart` - typically a
    * `TemplateResult`. Setting properties inside this method will *not* trigger
    * the element to update.
+   * @protected
    */
-  protected render(): unknown {
+  render(): unknown {
     return renderNotImplemented;
   }
 }
+
+}
+
+export class LitElement extends LitElementMixin(HTMLElement) {}
