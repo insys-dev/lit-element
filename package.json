@@ -1,5 +1,5 @@
 {
-  "name": "lit-element",
+  "name": "@insyselements/lit-element",
   "version": "2.4.1",
   "description": "A simple base class for creating fast, lightweight web components",
   "license": "BSD-3-Clause",
