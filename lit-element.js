@@ -61,7 +61,7 @@ export { html, svg, TemplateResult, SVGTemplateResult } from 'lit-html/lit-html.
 import { supportsAdoptingStyleSheets, unsafeCSS } from './lib/css-tag.js';
 export * from './lib/css-tag.js';
 import { interval, Subject } from 'rxjs';
-import { buffer, map, takeUntil } from 'rxjs/operators/index.js';
+import { buffer, map, takeUntil } from 'rxjs/operators';
 // IMPORTANT: do not change the property name or the assignment expression.
 // This line will be used in regexes to search for LitElement usage.
 // TODO(justinfagnani): inject version number at build time
