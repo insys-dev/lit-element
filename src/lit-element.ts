@@ -65,7 +65,7 @@ import {supportsAdoptingStyleSheets, CSSResult, unsafeCSS} from './lib/css-tag.j
 export * from './lib/css-tag.js';
 
 import { interval, Subject } from 'rxjs';
-import { buffer, map, takeUntil } from 'rxjs/operators/index.js';
+import { buffer, map, takeUntil } from 'rxjs/operators';
 
 declare global {
   interface Window {

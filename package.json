@@ -5,7 +5,6 @@
   "license": "BSD-3-Clause",
   "homepage": "https://lit-element.polymer-project.org/",
   "repository": "Polymer/lit-element",
-  "type": "module",
   "main": "lit-element.js",
   "module": "lit-element.js",
   "directories": {

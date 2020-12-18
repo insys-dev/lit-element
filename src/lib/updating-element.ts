@@ -13,7 +13,7 @@
  */
 
 import { Subject, timer, combineLatest } from "rxjs";
-import { first } from "rxjs/operators/index.js";
+import { first } from "rxjs/operators";
 
 /**
  * Use this module if you want to create your own base class extending
