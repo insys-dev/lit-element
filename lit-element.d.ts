@@ -54,11 +54,13 @@
  * @packageDocumentation
  */
 import { ShadyRenderOptions } from 'lit-html/lib/shady-render.js';
+import { PropertyValues } from './lib/updating-element.js';
 export * from './lib/updating-element.js';
 export * from './lib/decorators.js';
 export { html, svg, TemplateResult, SVGTemplateResult } from 'lit-html/lit-html.js';
 import { CSSResult } from './lib/css-tag.js';
 export * from './lib/css-tag.js';
+import { Subject } from 'rxjs';
 declare global {
     interface Window {
         litElementVersions: string[];
@@ -76,6 +78,11 @@ export declare const LitElementMixin: (superclass: typeof HTMLElement) => {
          * to an open shadowRoot.
          */
         readonly renderRoot: Element | DocumentFragment;
+        _$changedProperties: Subject<PropertyValues>;
+        _iceInitialized: boolean;
+        _renderBufferInitialized: boolean;
+        _$destroyed: Subject<never>;
+        _initRenderBuffer(): void;
         /**
          * Performs element initialization. By default this calls
          * [[`createRenderRoot`]] to create the element [[`renderRoot`]] node and
@@ -104,6 +111,7 @@ export declare const LitElementMixin: (superclass: typeof HTMLElement) => {
          */
         adoptStyles(): void;
         connectedCallback(): void;
+        disconnectedCallback(): void;
         /**
          * Updates the element. This method reflects property values to attributes
          * and calls `render` to render DOM via lit-html. Setting properties inside
@@ -112,6 +120,7 @@ export declare const LitElementMixin: (superclass: typeof HTMLElement) => {
          * @protected
          */
         update(changedProperties: Map<string | number | symbol, unknown>): void;
+        _doUpdate(changedProperties: Map<string | number | symbol, unknown>): void;
         /**
          * Invoked on each update to perform rendering tasks. This method may return
          * any value renderable by lit-html's `NodePart` - typically a
@@ -120,16 +129,18 @@ export declare const LitElementMixin: (superclass: typeof HTMLElement) => {
          * @protected
          */
         render(): unknown;
+        onInitCalled(): void;
+        onDestroyCalled(): void;
         _updateState: number;
         _instanceProperties?: Map<string | number | symbol, unknown> | undefined;
         _updatePromise: Promise<unknown>;
         _enableUpdatingResolver: (() => void) | undefined;
         _changedProperties: Map<string | number | symbol, unknown>;
         _reflectingProperties?: Map<string | number | symbol, import("./lib/updating-element.js").PropertyDeclaration<unknown, unknown>> | undefined;
+        _$rerendered: Subject<never>;
         _saveInstanceProperties(): void;
         _applyInstanceProperties(): void;
         enableUpdating(): void;
-        disconnectedCallback(): void;
         attributeChangedCallback(name: string, old: string | null, value: string | null): void;
         _propertyToAttribute(name: string | number | symbol, value: unknown, options?: import("./lib/updating-element.js").PropertyDeclaration<unknown, unknown>): void;
         _attributeToProperty(name: string, value: string | null): void;
@@ -145,6 +156,7 @@ export declare const LitElementMixin: (superclass: typeof HTMLElement) => {
         shouldUpdate(_changedProperties: Map<string | number | symbol, unknown>): boolean;
         updated(_changedProperties: Map<string | number | symbol, unknown>): void;
         firstUpdated(_changedProperties: Map<string | number | symbol, unknown>): void;
+        getEarlyNumAttribute(attrName: string): number | undefined;
         accessKey: string;
         readonly accessKeyLabel: string;
         autocapitalize: string;
@@ -475,6 +487,11 @@ declare const LitElement_base: {
          * to an open shadowRoot.
          */
         readonly renderRoot: Element | DocumentFragment;
+        _$changedProperties: Subject<Map<string | number | symbol, unknown>>;
+        _iceInitialized: boolean;
+        _renderBufferInitialized: boolean;
+        _$destroyed: Subject<never>;
+        _initRenderBuffer(): void;
         /**
          * Performs element initialization. By default this calls
          * [[`createRenderRoot`]] to create the element [[`renderRoot`]] node and
@@ -503,6 +520,7 @@ declare const LitElement_base: {
          */
         adoptStyles(): void;
         connectedCallback(): void;
+        disconnectedCallback(): void;
         /**
          * Updates the element. This method reflects property values to attributes
          * and calls `render` to render DOM via lit-html. Setting properties inside
@@ -511,6 +529,7 @@ declare const LitElement_base: {
          * @protected
          */
         update(changedProperties: Map<string | number | symbol, unknown>): void;
+        _doUpdate(changedProperties: Map<string | number | symbol, unknown>): void;
         /**
          * Invoked on each update to perform rendering tasks. This method may return
          * any value renderable by lit-html's `NodePart` - typically a
@@ -519,16 +538,18 @@ declare const LitElement_base: {
          * @protected
          */
         render(): unknown;
+        onInitCalled(): void;
+        onDestroyCalled(): void;
         _updateState: number;
         _instanceProperties?: Map<string | number | symbol, unknown> | undefined;
         _updatePromise: Promise<unknown>;
         _enableUpdatingResolver: (() => void) | undefined;
         _changedProperties: Map<string | number | symbol, unknown>;
         _reflectingProperties?: Map<string | number | symbol, import("./lib/updating-element.js").PropertyDeclaration<unknown, unknown>> | undefined;
+        _$rerendered: Subject<never>;
         _saveInstanceProperties(): void;
         _applyInstanceProperties(): void;
         enableUpdating(): void;
-        disconnectedCallback(): void;
         attributeChangedCallback(name: string, old: string | null, value: string | null): void;
         _propertyToAttribute(name: string | number | symbol, value: unknown, options?: import("./lib/updating-element.js").PropertyDeclaration<unknown, unknown>): void;
         _attributeToProperty(name: string, value: string | null): void;
@@ -544,6 +565,7 @@ declare const LitElement_base: {
         shouldUpdate(_changedProperties: Map<string | number | symbol, unknown>): boolean;
         updated(_changedProperties: Map<string | number | symbol, unknown>): void;
         firstUpdated(_changedProperties: Map<string | number | symbol, unknown>): void;
+        getEarlyNumAttribute(attrName: string): number | undefined;
         accessKey: string;
         readonly accessKeyLabel: string;
         autocapitalize: string;

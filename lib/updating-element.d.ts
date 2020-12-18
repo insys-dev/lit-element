@@ -11,6 +11,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+import { Subject } from "rxjs";
 declare global {
     var JSCompiler_renameProperty: <P extends PropertyKey>(prop: P, _obj: unknown) => P;
     interface Window {
@@ -148,6 +149,7 @@ export declare const UpdatingElementMixin: (superclass: typeof HTMLElement) => {
          */
         /** @private */
         _reflectingProperties?: Map<string | number | symbol, PropertyDeclaration<unknown, unknown>> | undefined;
+        _$rerendered: Subject<never>;
         /**
          * Performs element initialization. By default captures any pre-set values for
          * registered properties.
@@ -315,6 +317,7 @@ export declare const UpdatingElementMixin: (superclass: typeof HTMLElement) => {
          * @protected
          */
         firstUpdated(_changedProperties: Map<string | number | symbol, unknown>): void;
+        getEarlyNumAttribute(attrName: string): number | undefined;
         accessKey: string;
         readonly accessKeyLabel: string;
         autocapitalize: string;
@@ -737,6 +740,7 @@ declare const UpdatingElement_base: {
          */
         /** @private */
         _reflectingProperties?: Map<string | number | symbol, PropertyDeclaration<unknown, unknown>> | undefined;
+        _$rerendered: Subject<never>;
         /**
          * Performs element initialization. By default captures any pre-set values for
          * registered properties.
@@ -904,6 +908,7 @@ declare const UpdatingElement_base: {
          * @protected
          */
         firstUpdated(_changedProperties: Map<string | number | symbol, unknown>): void;
+        getEarlyNumAttribute(attrName: string): number | undefined;
         accessKey: string;
         readonly accessKeyLabel: string;
         autocapitalize: string;

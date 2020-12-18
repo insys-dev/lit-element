@@ -11,6 +11,12 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+/**
+ * Use this module if you want to create your own base class extending
+ * [[UpdatingElement]].
+ * @packageDocumentation
+ */
+import { Subject } from 'rxjs';
 declare global {
     var JSCompiler_renameProperty: <P extends PropertyKey>(prop: P, _obj: unknown) => P;
     interface Window {
@@ -146,6 +152,7 @@ export declare const UpdatingElementMixin: (superclass: {
          */
         /** @private */
         _reflectingProperties?: Map<string | number | symbol, PropertyDeclaration<unknown, unknown>> | undefined;
+        _renderThrottler: Subject<unknown>;
         /**
          * Performs element initialization. By default captures any pre-set values for
          * registered properties.
@@ -735,6 +742,7 @@ declare const UpdatingElement_base: {
          */
         /** @private */
         _reflectingProperties?: Map<string | number | symbol, PropertyDeclaration<unknown, unknown>> | undefined;
+        _renderThrottler: Subject<unknown>;
         /**
          * Performs element initialization. By default captures any pre-set values for
          * registered properties.

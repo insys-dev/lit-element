@@ -129,6 +129,7 @@ export declare const LitElementMixin: (superclass: {
         _enableUpdatingResolver: (() => void) | undefined;
         _changedProperties: Map<string | number | symbol, unknown>;
         _reflectingProperties?: Map<string | number | symbol, import("./lib/updating-element.js").PropertyDeclaration<unknown, unknown>> | undefined;
+        _renderThrottler: import("rxjs").Subject<unknown>;
         _saveInstanceProperties(): void;
         _applyInstanceProperties(): void;
         enableUpdating(): void;
@@ -528,6 +529,7 @@ declare const LitElement_base: {
         _enableUpdatingResolver: (() => void) | undefined;
         _changedProperties: Map<string | number | symbol, unknown>;
         _reflectingProperties?: Map<string | number | symbol, import("./lib/updating-element.js").PropertyDeclaration<unknown, unknown>> | undefined;
+        _renderThrottler: import("rxjs").Subject<unknown>;
         _saveInstanceProperties(): void;
         _applyInstanceProperties(): void;
         enableUpdating(): void;

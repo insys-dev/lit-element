@@ -60,6 +60,8 @@ export * from './lib/decorators.js';
 export { html, svg, TemplateResult, SVGTemplateResult } from 'lit-html/lit-html.js';
 import { supportsAdoptingStyleSheets, unsafeCSS } from './lib/css-tag.js';
 export * from './lib/css-tag.js';
+import { interval, Subject } from 'rxjs';
+import { buffer, map, takeUntil } from 'rxjs/operators/index.js';
 // IMPORTANT: do not change the property name or the assignment expression.
 // This line will be used in regexes to search for LitElement usage.
 // TODO(justinfagnani): inject version number at build time
@@ -143,6 +145,34 @@ export const LitElementMixin = function (superclass) {
                     return s;
                 });
             }
+            _initRenderBuffer() {
+                // Set up render throttle
+                let buffered;
+                const bufferTime = this.getEarlyNumAttribute('bufferTime');
+                if (bufferTime !== undefined) {
+                    const bufferTimeNum = +bufferTime;
+                    const $renderInterval = interval(bufferTimeNum);
+                    const $bufferFlusher = new Subject();
+                    // Use interval to throttle render(). 
+                    $renderInterval.pipe(takeUntil(this._$destroyed)).subscribe(() => {
+                        $bufferFlusher.next();
+                    });
+                    buffered = this._$changedProperties.pipe(buffer($bufferFlusher));
+                }
+                else
+                    buffered = this._$changedProperties.pipe(map(val => [val]));
+                buffered.pipe(takeUntil(this._$destroyed)).subscribe(changedProperties => {
+                    const spreadMaps = [];
+                    for (const changedProperty of changedProperties) {
+                        if (changedProperty)
+                            spreadMaps.push(...changedProperty);
+                    }
+                    const jointMap = new Map(spreadMaps);
+                    if (jointMap.size || !this._iceInitialized)
+                        this._doUpdate(jointMap);
+                });
+                this._renderBufferInitialized = true;
+            }
             /**
              * Performs element initialization. By default this calls
              * [[`createRenderRoot`]] to create the element [[`renderRoot`]] node and
@@ -159,6 +189,11 @@ export const LitElementMixin = function (superclass) {
                 if (window.ShadowRoot && this.renderRoot instanceof window.ShadowRoot) {
                     this.adoptStyles();
                 }
+                this._$destroyed = new Subject();
+                this._iceInitialized = false;
+                this._renderBufferInitialized = false;
+                this._$changedProperties = new Subject();
+                this._initRenderBuffer();
             }
             /**
              * Returns the node into which the element should render and by default
@@ -211,6 +246,14 @@ export const LitElementMixin = function (superclass) {
                 if (this.hasUpdated && window.ShadyCSS !== undefined) {
                     window.ShadyCSS.styleElement(this);
                 }
+                // Reinitialize if the component was reinserted into DOM
+                if (!this._renderBufferInitialized)
+                    this._initRenderBuffer();
+            }
+            disconnectedCallback() {
+                super.disconnectedCallback();
+                this._$destroyed.next();
+                this._renderBufferInitialized = false;
             }
             /**
              * Updates the element. This method reflects property values to attributes
@@ -220,6 +263,9 @@ export const LitElementMixin = function (superclass) {
              * @protected
              */
             update(changedProperties) {
+                this._$changedProperties.next(changedProperties);
+            }
+            _doUpdate(changedProperties) {
                 // Setting properties in `render` should not trigger an update. Since
                 // updates are allowed after super.update, it's important to call `render`
                 // before that.
@@ -241,6 +287,7 @@ export const LitElementMixin = function (superclass) {
                         this.renderRoot.appendChild(style);
                     });
                 }
+                this._$rerendered.next();
             }
             /**
              * Invoked on each update to perform rendering tasks. This method may return
@@ -251,6 +298,12 @@ export const LitElementMixin = function (superclass) {
              */
             render() {
                 return renderNotImplemented;
+            }
+            onInitCalled() {
+                this._iceInitialized = true;
+            }
+            onDestroyCalled() {
+                this._iceInitialized = false;
             }
         },
         /**
