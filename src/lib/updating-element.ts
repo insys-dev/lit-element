@@ -822,24 +822,28 @@ return class extends superclass {
       throw e;
     }
     if (shouldUpdate) {
-      if (!(this._updateState & STATE_HAS_UPDATED)) {
+      const bufferTime = this.getEarlyNumAttribute('bufferTime');
+      const useBufferTime = bufferTime !== undefined;
+      const isFirstUpdate = !(this._updateState & STATE_HAS_UPDATED);
+
+      if (isFirstUpdate) {
         this._updateState = this._updateState | STATE_HAS_UPDATED;
 
-        const bufferTime = this.getEarlyNumAttribute('bufferTime');
         // Delfay firstUpdated() if render buffer is enabled
-        if(bufferTime !== undefined) {
+        if(useBufferTime) {
           const $noNextRender = timer(bufferTime);
           
           // Notify about firstUpdated after next rerender OR fallback to buffer timeout if no rerender happens
           combineLatest([$noNextRender, this._$rerendered]).pipe(first()).subscribe(() => {
             this.firstUpdated(changedProperties);
+            this.updated(changedProperties);
           });
         }
         else {
           this.firstUpdated(changedProperties);
         }
       }
-      this.updated(changedProperties);
+      if(!(useBufferTime && isFirstUpdate)) this.updated(changedProperties);
     }
   }
 
@@ -957,7 +961,7 @@ return class extends superclass {
     const attrVal = this.getAttribute(attrName);
     if(isNumber(attrVal)) return +attrVal!;
     const thisVal = (this as any)[attrName];
-    if(isNumber(thisVal)) return +attrVal!;
+    if(isNumber(thisVal)) return +thisVal!;
     else return undefined;
   }
 }
