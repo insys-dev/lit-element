@@ -64,9 +64,6 @@ export {html, svg, TemplateResult, SVGTemplateResult} from 'lit-html/lit-html.js
 import {supportsAdoptingStyleSheets, CSSResult, unsafeCSS} from './lib/css-tag.js';
 export * from './lib/css-tag.js';
 
-import { interval, Subject } from 'rxjs';
-import { buffer, map, takeUntil } from 'rxjs/operators';
-
 declare global {
   interface Window {
     litElementVersions: string[];
@@ -219,43 +216,7 @@ return class extends UpdatingElementMixin(superclass) {
    */
   readonly renderRoot!: Element|DocumentFragment;
 
-  _$changedProperties!: Subject<PropertyValues>;
   _iceInitialized!: boolean;
-  _renderBufferInitialized!: boolean;
-  _$destroyed!: Subject<never>; //Unsubscribe
-
-  _initRenderBuffer() {
-    // Set up render throttle
-    let buffered;
-
-    const bufferTime = this.getEarlyNumAttribute('bufferTime');
-    if(bufferTime !== undefined) {
-      const bufferTimeNum = +bufferTime;
-
-      const $renderInterval = interval(bufferTimeNum);
-      const $bufferFlusher = new Subject<never>();
-
-      // Use interval to throttle render(). 
-      $renderInterval.pipe(takeUntil(this._$destroyed)).subscribe(() => {
-        $bufferFlusher.next();
-      });
-
-      buffered = this._$changedProperties.pipe(buffer($bufferFlusher));
-    }
-    else buffered = this._$changedProperties.pipe(map(val => [val]));
-
-    buffered.pipe(takeUntil(this._$destroyed)).subscribe(changedProperties => {
-      const spreadMaps = [];
-      for(const changedProperty of changedProperties) {
-        if(changedProperty) spreadMaps.push(...changedProperty);
-      }
-      const jointMap = new Map(spreadMaps);
-      if(jointMap.size || !this._iceInitialized) this._doUpdate(jointMap);
-    });
-
-    this._renderBufferInitialized = true;
-  }
-
   /**
    * Performs element initialization. By default this calls
    * [[`createRenderRoot`]] to create the element [[`renderRoot`]] node and
@@ -275,12 +236,7 @@ return class extends UpdatingElementMixin(superclass) {
       this.adoptStyles();
     }
 
-    this._$destroyed = new Subject();
     this._iceInitialized = false;
-    this._renderBufferInitialized = false;
-    this._$changedProperties = new Subject<PropertyValues>();
-
-    this._initRenderBuffer();
   }
 
   /**
@@ -335,16 +291,6 @@ return class extends UpdatingElementMixin(superclass) {
     if (this.hasUpdated && window.ShadyCSS !== undefined) {
       window.ShadyCSS.styleElement(this);
     }
-
-    // Reinitialize if the component was reinserted into DOM
-    if(!this._renderBufferInitialized) this._initRenderBuffer();
-  }
-  
-  disconnectedCallback() {
-    super.disconnectedCallback();
-
-    this._$destroyed.next();
-    this._renderBufferInitialized = false;
   }
 
   /**
@@ -355,10 +301,6 @@ return class extends UpdatingElementMixin(superclass) {
    * @protected
    */
   update(changedProperties: PropertyValues) {
-    this._$changedProperties.next(changedProperties);
-  }
-
-  _doUpdate(changedProperties: PropertyValues) {
     // Setting properties in `render` should not trigger an update. Since
     // updates are allowed after super.update, it's important to call `render`
     // before that.
@@ -383,8 +325,6 @@ return class extends UpdatingElementMixin(superclass) {
         this.renderRoot.appendChild(style);
       });
     }
-
-    this._$rerendered!.next();
   }
 
   /**
@@ -405,15 +345,6 @@ return class extends UpdatingElementMixin(superclass) {
   onDestroyCalled() {
     this._iceInitialized = false;
   }
-
-  /*
-  // "Lazy rendering"
-  // See: https://julienrenaux.fr/2019/04/01/lit-element-rendering-strategies-explained/#lazy-rendering
-  async performUpdate() {
-    await new Promise((resolve) => setTimeout(resolve));
-    super.performUpdate();
-  }
-  */
 }
 
 }

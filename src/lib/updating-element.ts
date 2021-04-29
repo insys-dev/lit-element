@@ -12,9 +12,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { Subject, timer, combineLatest } from "rxjs";
-import { first } from "rxjs/operators";
-
 /**
  * Use this module if you want to create your own base class extending
  * [[UpdatingElement]].
@@ -533,8 +530,6 @@ return class extends superclass {
   /** @private */
   _reflectingProperties?: Map<PropertyKey, PropertyDeclaration>;
 
-  _$rerendered!: Subject<never>;
-
   constructor() {
     super();
     this.initialize();
@@ -554,8 +549,6 @@ return class extends superclass {
     // ensures first update will be caught by an early access of
     // `updateComplete`
     this.requestUpdateInternal();
-
-    this._$rerendered = new Subject();
   }
 
   /**
@@ -822,28 +815,11 @@ return class extends superclass {
       throw e;
     }
     if (shouldUpdate) {
-      const bufferTime = this.getEarlyNumAttribute('bufferTime');
-      const useBufferTime = bufferTime !== undefined;
-      const isFirstUpdate = !(this._updateState & STATE_HAS_UPDATED);
-
-      if (isFirstUpdate) {
+      if (!(this._updateState & STATE_HAS_UPDATED)) {
         this._updateState = this._updateState | STATE_HAS_UPDATED;
-
-        // Delfay firstUpdated() if render buffer is enabled
-        if(useBufferTime) {
-          const $noNextRender = timer(bufferTime);
-          
-          // Notify about firstUpdated after next rerender OR fallback to buffer timeout if no rerender happens
-          combineLatest([$noNextRender, this._$rerendered]).pipe(first()).subscribe(() => {
-            this.firstUpdated(changedProperties);
-            this.updated(changedProperties);
-          });
-        }
-        else {
-          this.firstUpdated(changedProperties);
-        }
+        this.firstUpdated(changedProperties);
       }
-      if(!(useBufferTime && isFirstUpdate)) this.updated(changedProperties);
+      this.updated(changedProperties);
     }
   }
 
@@ -950,19 +926,6 @@ return class extends superclass {
    * @protected
    */
   firstUpdated(_changedProperties: PropertyValues) {
-  }
-
-  getEarlyNumAttribute(attrName: string) {
-    const isNumber = (str: any) => {
-      if (!["string", "number"].includes(typeof str)) return false; // we only process strings!  
-      return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
-         !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
-    };
-    const attrVal = this.getAttribute(attrName);
-    if(isNumber(attrVal)) return +attrVal!;
-    const thisVal = (this as any)[attrName];
-    if(isNumber(thisVal)) return +thisVal!;
-    else return undefined;
   }
 }
 

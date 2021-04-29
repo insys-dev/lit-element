@@ -22,7 +22,9 @@
     "/ts3.4/"
   ],
   "scripts": {
-    "build": "tsc && rmdir ./ts3.4 && downlevel-dts . ts3.4 && cp tsconfig.json ./ts3.4/",
+    "build": "tsc && rm -rf ./ts3.4 && downlevel-dts . ts3.4 && cp tsconfig.json ./ts3.4/",
+    "build-ps": "tsc && rm -r -Force ts3.4 && downlevel-dts . ts3.4 && cp tsconfig.json ./ts3.4/",
+    "build-cmd": "tsc && rmdir /s /q ts3.4 && downlevel-dts . ts3.4 && cp tsconfig.json ./ts3.4/",
     "build:watch": "tsc --watch",
     "build:babel-test": "babel src/test/lib/decorators_test.ts --out-file test/lib/decorators-babel_test.js",
     "gen-docs": "typedoc src/lit-element.ts src/lib/updating-element.ts",
@@ -36,7 +38,7 @@
     "regen-package-lock": "rm -rf node_modules package-lock.json; npm install",
     "publish-dev": "npm test && VERSION=${npm_package_version%-*}-dev.`git rev-parse --short HEAD` && npm version --no-git-tag-version $VERSION && npm publish --tag dev",
     "release": "np --any-branch --yolo",
-    "build-insys": "tsc",
+    "build-insys": "npm run build-cmd",
     "publish-insys": "npm version patch && npm publish"
   },
   "author": "The Polymer Authors",
@@ -76,8 +78,7 @@
     }
   },
   "dependencies": {
-    "lit-html": "^1.1.1",
-    "rxjs": "^6.6.3"
+    "lit-html": "^1.1.1"
   },
   "publishConfig": {
     "access": "public"
